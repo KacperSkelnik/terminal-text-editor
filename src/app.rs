@@ -128,4 +128,17 @@ impl App {
 
         self.increase_cursor_position_y()
     }
+
+    pub fn mouse_click(&mut self, x: usize, y: usize) {
+        if x != 0 {
+            self.cursor_position_x = x - 1
+        } else {
+            self.cursor_position_x = 0
+        };
+        if y != 0 {
+            self.cursor_position_y = y - 1
+        } else {
+            self.cursor_position_y = 0
+        };
+    }
 }

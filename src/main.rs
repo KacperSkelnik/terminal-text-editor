@@ -18,7 +18,7 @@ use app::App;
 use event::{Event, EventHandler};
 use ratatui::{backend::CrosstermBackend, Terminal};
 use tui::Tui;
-use update::update;
+use update::{update_for_keys, update_for_mouse};
 
 fn main() -> Result<()> {
     // Create an application.
@@ -38,8 +38,8 @@ fn main() -> Result<()> {
         // Handle events.
         match tui.events.next()? {
             Event::Tick => {}
-            Event::Key(key_event) => update(&mut app, key_event),
-            Event::Mouse(_) => {}
+            Event::Key(key_event) => update_for_keys(&mut app, key_event),
+            Event::Mouse(mouse_event) => update_for_mouse(&mut app, mouse_event),
             Event::Resize(_, _) => {}
         };
     }

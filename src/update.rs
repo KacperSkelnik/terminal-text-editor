@@ -1,5 +1,5 @@
 use crate::app::App;
-use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
+use crossterm::event::{KeyCode, KeyEvent, KeyModifiers, MouseButton, MouseEvent, MouseEventKind};
 
 #[derive(PartialEq)]
 enum Message {
@@ -11,6 +11,7 @@ enum Message {
     Remove,
     NewLine,
     Quit,
+    Click(usize, usize),
 }
 
 impl Message {
@@ -27,23 +28,37 @@ impl Message {
             _ => None,
         }
     }
-}
 
-fn process_update(app: &mut App, message: Message) {
-    match message {
-        Message::Right => app.increase_cursor_position_x(),
-        Message::Left => app.decrease_cursor_position_x(),
-        Message::Up => app.decrease_cursor_position_y(),
-        Message::Down => app.increase_cursor_position_y(),
-        Message::Input(input) => app.add_character(input),
-        Message::Remove => app.remove_character(),
-        Message::NewLine => app.new_line(),
-        Message::Quit => app.quit(),
+    fn from_mouse(mouse_event: MouseEvent) -> Option<Message> {
+        match mouse_event.kind {
+            MouseEventKind::Down(button) if button == MouseButton::Left => {
+                Some(Message::Click(mouse_event.column as usize, mouse_event.row as usize))
+            }
+            _ => None,
+        }
     }
 }
 
-pub fn update(app: &mut App, key_event: KeyEvent) {
+pub fn update_for_keys(app: &mut App, key_event: KeyEvent) {
     if let Some(message) = Message::from_key(key_event) {
-        process_update(app, message)
+        match message {
+            Message::Right => app.increase_cursor_position_x(),
+            Message::Left => app.decrease_cursor_position_x(),
+            Message::Up => app.decrease_cursor_position_y(),
+            Message::Down => app.increase_cursor_position_y(),
+            Message::Input(input) => app.add_character(input),
+            Message::Remove => app.remove_character(),
+            Message::NewLine => app.new_line(),
+            Message::Quit => app.quit(),
+            _ => (),
+        }
+    }
+}
+
+pub fn update_for_mouse(app: &mut App, mouse_event: MouseEvent) {
+    if let Some(message) = Message::from_mouse(mouse_event) {
+        if let Message::Click(x, y) = message {
+            app.mouse_click(x, y)
+        }
     }
 }
