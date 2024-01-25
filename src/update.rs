@@ -9,6 +9,7 @@ enum Message {
     Down,
     Input(char),
     Remove,
+    NewLine,
     Quit,
 }
 
@@ -18,12 +19,11 @@ impl Message {
             KeyCode::Right => Some(Message::Right),
             KeyCode::Left => Some(Message::Left),
             KeyCode::Up => Some(Message::Up),
-            KeyCode::Enter | KeyCode::Down => Some(Message::Down),
-            KeyCode::Char('c') | KeyCode::Char('C') if key.modifiers == KeyModifiers::CONTROL => {
-                Some(Message::Quit)
-            }
+            KeyCode::Down => Some(Message::Down),
+            KeyCode::Char('c') | KeyCode::Char('C') if key.modifiers == KeyModifiers::CONTROL => Some(Message::Quit),
             KeyCode::Char(input) => Some(Message::Input(input)),
             KeyCode::Backspace => Some(Message::Remove),
+            KeyCode::Enter => Some(Message::NewLine),
             _ => None,
         }
     }
@@ -37,6 +37,7 @@ fn process_update(app: &mut App, message: Message) {
         Message::Down => app.increase_cursor_position_y(),
         Message::Input(input) => app.add_character(input),
         Message::Remove => app.remove_character(),
+        Message::NewLine => app.new_line(),
         Message::Quit => app.quit(),
     }
 }

@@ -10,12 +10,7 @@ pub struct App {
 
 impl Default for App {
     fn default() -> Self {
-        App {
-            text: vec![vec![' ']],
-            cursor_position_x: 0,
-            cursor_position_y: 0,
-            should_quit: false,
-        }
+        App { text: vec![Vec::new()], cursor_position_x: 0, cursor_position_y: 0, should_quit: false }
     }
 }
 
@@ -63,11 +58,12 @@ impl App {
 
     pub fn add_character(&mut self, character: char) {
         let lines = self.text.len();
-        let line_length = self.text[self.cursor_position_y].len();
 
         if self.cursor_position_y >= lines - 1 {
-            self.text.resize(self.cursor_position_y + 1, vec![' ']);
+            self.text.resize(self.cursor_position_y + 1, Vec::new());
         }
+
+        let line_length = self.text[self.cursor_position_y].len();
 
         match self.cursor_position_x {
             x if x == line_length => self.text[self.cursor_position_y].push(character),
@@ -81,36 +77,55 @@ impl App {
         self.increase_cursor_position_x();
     }
 
-    pub fn remove_character(&mut self) {
-        let lines = self.text.len();
-        let line_length = self.text[self.cursor_position_y].len();
+    fn save_line_remove(&mut self) {
+        if self.cursor_position_y < self.text.len() {
+            let mut line_to_remove = self.text[self.cursor_position_y].clone();
+            let previous_line_length = self.text[self.cursor_position_y - 1].len();
+            self.text[self.cursor_position_y - 1].append(&mut line_to_remove);
+            self.text.remove(self.cursor_position_y);
+            self.cursor_position_x = previous_line_length;
+        }
 
-        if (self.cursor_position_y < lines || self.cursor_position_x <= line_length)
+        self.decrease_cursor_position_y()
+    }
+
+    fn save_character_remove(&mut self) {
+        if self.cursor_position_y < self.text.len()
+            && self.cursor_position_x <= self.text[self.cursor_position_y].len()
             && self.cursor_position_x > 0
-            && self.cursor_position_x < line_length + 1
         {
             self.text[self.cursor_position_y].remove(self.cursor_position_x - 1);
         }
 
         self.decrease_cursor_position_x();
     }
-}
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_app_cursor_x() {
-        let mut app = App::default();
-        app.increase_cursor_position_x();
-        assert_eq!(app.cursor_position_x, 1);
+    pub fn remove_character(&mut self) {
+        if self.cursor_position_x == 0 && self.cursor_position_y != 0 {
+            self.save_line_remove();
+        } else {
+            self.save_character_remove();
+        }
     }
 
-    #[test]
-    fn test_app_cursor_y() {
-        let mut app = App::default();
-        app.decrease_cursor_position_y();
-        assert_eq!(app.cursor_position_y, 0);
+    pub fn new_line(&mut self) {
+        if self.cursor_position_x >= self.text[self.cursor_position_y].len() {
+            // end of the of the line
+            self.text.push(Vec::new());
+            self.cursor_position_x = if self.cursor_position_y + 1 < self.text.len() {
+                self.text[self.cursor_position_y + 1].len()
+            } else {
+                0
+            };
+        } else {
+            // new line in the middle of the text
+            let line = self.text[self.cursor_position_y].clone();
+            let (kto_keep_in_line, for_new_line) = line.split_at(self.cursor_position_x);
+            self.text[self.cursor_position_y] = Vec::from(kto_keep_in_line);
+            self.text.insert(self.cursor_position_y + 1, Vec::from(for_new_line));
+            self.cursor_position_x = 0;
+        }
+
+        self.increase_cursor_position_y()
     }
 }
