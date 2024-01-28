@@ -79,7 +79,8 @@ impl App {
 
     fn save_line_remove(&mut self) {
         if self.cursor_position_y < self.text.len() {
-            let mut line_to_remove = self.text[self.cursor_position_y].clone();
+            let mut line_to_remove =
+                self.text[self.cursor_position_y].iter().skip_while(|char| **char == ' ').copied().collect();
             let previous_line_length = self.text[self.cursor_position_y - 1].len();
             self.text[self.cursor_position_y - 1].append(&mut line_to_remove);
             self.text.remove(self.cursor_position_y);
