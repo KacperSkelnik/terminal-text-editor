@@ -1,4 +1,6 @@
 use std::fmt::{Display, Formatter};
+use std::fs::File;
+use std::io::{LineWriter, Write};
 
 #[derive(Debug)]
 pub struct App {
@@ -6,18 +8,26 @@ pub struct App {
     pub cursor_position_x: usize,
     pub cursor_position_y: usize,
     pub should_quit: bool,
+    pub show_context: bool,
 }
 
 impl Default for App {
     fn default() -> Self {
-        App { text: vec![Vec::new()], cursor_position_x: 0, cursor_position_y: 0, should_quit: false }
+        App {
+            text: vec![Vec::new()],
+            cursor_position_x: 0,
+            cursor_position_y: 0,
+            should_quit: false,
+            show_context: false,
+        }
     }
 }
 
 impl Display for App {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         let text = self.text.clone();
-        text.into_iter().try_for_each(|line| writeln!(f, "{}", line.iter().collect::<String>()))
+        text.into_iter()
+            .try_for_each(|line| writeln!(f, "{}", line.iter().collect::<String>()))
     }
 }
 
@@ -30,6 +40,22 @@ impl App {
 
     pub fn quit(&mut self) {
         self.should_quit = true;
+    }
+
+    pub fn show_context(&mut self) {
+        self.show_context = !self.show_context;
+    }
+
+    pub fn save_file(&mut self) {
+        let file = File::create("poem.txt").unwrap();
+        let mut file = LineWriter::new(file);
+        let lines = self
+            .text
+            .iter()
+            .map(|line| line.iter().collect::<String>())
+            .collect::<Vec<String>>();
+        file.write_all(lines.join("\n").as_bytes()).unwrap();
+        file.flush().unwrap();
     }
 
     pub fn increase_cursor_position_x(&mut self) {
@@ -79,8 +105,11 @@ impl App {
 
     fn save_line_remove(&mut self) {
         if self.cursor_position_y < self.text.len() {
-            let mut line_to_remove =
-                self.text[self.cursor_position_y].iter().skip_while(|char| **char == ' ').copied().collect();
+            let mut line_to_remove = self.text[self.cursor_position_y]
+                .iter()
+                .skip_while(|char| **char == ' ')
+                .copied()
+                .collect();
             let previous_line_length = self.text[self.cursor_position_y - 1].len();
             self.text[self.cursor_position_y - 1].append(&mut line_to_remove);
             self.text.remove(self.cursor_position_y);
